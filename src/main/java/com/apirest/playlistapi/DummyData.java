@@ -10,7 +10,7 @@ import com.apirest.playlistapi.repository.PlaylistRepository;
 
 import reactor.core.publisher.Flux;
 
-@Component
+/*@Component
 public class DummyData implements CommandLineRunner {
 
 	private final PlaylistRepository playlistRepository;
@@ -30,4 +30,4 @@ public class DummyData implements CommandLineRunner {
 							.flatMap(playlistRepository::save))
 			.subscribe(System.out::println);
 	}
-}
+}*/
