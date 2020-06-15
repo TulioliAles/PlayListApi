@@ -1,33 +1,40 @@
-package com.apirest.playlistapi.services;
+package com.spring.agendalive.service;
 
+import com.spring.agendalive.document.LiveDocument;
+import com.spring.agendalive.repository.LiveRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.apirest.playlistapi.document.Playlist;
-import com.apirest.playlistapi.repository.PlaylistRepository;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
-public class PlaylistServiceImpl implements PlaylistService {
+public class LiveService {
 
-	@Autowired
-	PlaylistRepository pr;
-	
-	@Override
-	public Flux<Playlist> findAll() {
-		return pr.findAll();
-	}
+    @Autowired
+    LiveRepository liveRepository;
 
-	@Override
-	public Mono<Playlist> findById(String id) {
-		return pr.findById(id);
-	}
+    public Page<LiveDocument> findAll(Pageable pageable, String flag){
+        if(flag != null && flag.equals("next")){
+            return liveRepository.findByLiveDateAfterOrderByLiveDateAsc(LocalDateTime.now(), pageable);
+        }else if(flag != null && flag.equals("previous")){
+            return liveRepository.findByLiveDateBeforeOrderByLiveDateDesc(LocalDateTime.now(), pageable);
+        }else{
+            return liveRepository.findAll(pageable);
+        }
+    }
 
-	@Override
-	public Mono<Playlist> save(Playlist playlist) {
-		return pr.save(playlist);
-	}
+    public Optional<LiveDocument> findById(String id){
+        return liveRepository.findById(id);
+    }
 
+    public LiveDocument save(LiveDocument liveDocument){
+        return liveRepository.save(liveDocument);
+    }
+
+    public void delete(LiveDocument liveDocument){
+        liveRepository.delete(liveDocument);
+    }
 }
