@@ -1,9 +1,14 @@
-package com.apirest.playlistapi.repository;
+package com.spring.agendalive.repository;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import com.spring.agendalive.document.LiveDocument;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import java.time.LocalDateTime;
 
-import com.apirest.playlistapi.document.Playlist;
 
-public interface PlaylistRepository extends ReactiveMongoRepository<Playlist, String> {
+public interface LiveRepository extends MongoRepository<LiveDocument, String> {
 
+    Page<LiveDocument> findByLiveDateAfterOrderByLiveDateAsc(LocalDateTime date, Pageable pageable);
+    Page<LiveDocument> findByLiveDateBeforeOrderByLiveDateDesc(LocalDateTime date, Pageable pageable);
 }
