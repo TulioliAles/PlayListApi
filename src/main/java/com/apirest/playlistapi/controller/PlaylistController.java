@@ -1,48 +1,74 @@
-package com.apirest.playlistapi.controller;
+package com.spring.agendalive.controller;
 
-import java.time.Duration;
-
+import com.spring.agendalive.document.LiveDocument;
+import com.spring.agendalive.service.LiveService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import com.apirest.playlistapi.document.Playlist;
-import com.apirest.playlistapi.services.PlaylistService;
+import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-
+@CrossOrigin(origins = "*")
 @RestController
-public class PlaylistController {
+public class LiveController {
 
-	@Autowired
-	PlaylistService sr;
-	
-	@GetMapping(value="/playlist")
-	public Flux<Playlist> getPlaylist(){
-		return sr.findAll();
-	}
-	
-	@GetMapping(value="/playlist/{id}")
-	public Mono<Playlist> getPlaylistId(@PathVariable String id){
-		return sr.findById(id);
-	}
-	
-	@PostMapping(value="/playlist")
-	public Mono<Playlist> save(@RequestBody Playlist playlist){
-		return sr.save(playlist);
-	}
-	
-	@GetMapping(value="/playlist/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	public Flux<Tuple2<Long, Playlist>> getPlaylistByEvents(){
-		Flux<Long> interval = Flux.interval(Duration.ofSeconds(10));
-		Flux<Playlist> events = sr.findAll();
-		return Flux.zip(interval, events);
-	}
-	
+    @Autowired
+    LiveService liveService;
+
+    @GetMapping("/lives")
+    public ResponseEntity<Page<LiveDocument>> getAllLives(@PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable,
+                                                          @RequestParam(required = false) String flag){
+        Page<LiveDocument> livePage = liveService.findAll(pageable, flag);
+        if(livePage.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }else {
+            return new ResponseEntity<Page<LiveDocument>>(livePage, HttpStatus.OK);
+        }
+    }
+
+    @GetMapping("/lives/{id}")
+    public ResponseEntity<LiveDocument> getOneLive(@PathVariable(value="id") String id){
+        Optional<LiveDocument> liveO = liveService.findById(id);
+        if(!liveO.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }else {
+            return new ResponseEntity<LiveDocument>(liveO.get(), HttpStatus.OK);
+        }
+    }
+
+    @PostMapping("/lives")
+    public ResponseEntity<LiveDocument> saveLive(@RequestBody @Valid LiveDocument live) {
+        live.setRegistrationDate(LocalDateTime.now());
+        return new ResponseEntity<LiveDocument>(liveService.save(live), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/lives/{id}")
+    public ResponseEntity<?> deleteLive(@PathVariable(value="id") String id) {
+        Optional<LiveDocument> liveO = liveService.findById(id);
+        if(!liveO.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }else {
+            liveService.delete(liveO.get());
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+    }
+
+    @PutMapping("/lives/{id}")
+    public ResponseEntity<LiveDocument> updateLive(@PathVariable(value="id") String id,
+                                                      @RequestBody @Valid LiveDocument liveDocument) {
+        Optional<LiveDocument> liveO = liveService.findById(id);
+        if(!liveO.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }else {
+            liveDocument.setId(liveO.get().getId());
+            return new ResponseEntity<LiveDocument>(liveService.save(liveDocument), HttpStatus.OK);
+        }
+    }
 }
